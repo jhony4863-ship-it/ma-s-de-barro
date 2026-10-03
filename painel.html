@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Obra Pau a Pique - Gestão Completa</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+ <style>
+    :root {
+      --bg-dark: #0f0c08;
+      --card-bg: #1c150e;
+      --wood-gold: #dda15e;
+      --clay-brown: #bc6c25;
+      --green-profit: #2a9d8f;
+      --red-alert: #e71d36;
+      --text-main: #faedcd;
+      --text-muted: #998b7d;
+      --border-wood: #3a2718;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #140f0a;
+      border-bottom: 2px solid var(--clay-brown);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    @media (min-width: 768px) {
+      header {
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 1rem 2rem;
+      }
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand i { font-size: 1.6rem; color: var(--wood-gold); }
+    .brand h1 { font-size: 1.1rem; font-weight: 800; color: var(--wood-gold); letter-spacing: 0.5px; }
+
+    nav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      width: 100%;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-wood);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.8rem;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    .nav-btn.active, .nav-btn:hover {
+      background: var(--wood-gold);
+      color: #000;
+      box-shadow: 0 0 10px rgba(221, 161, 94, 0.4);
+    }
+
+    main {
+      padding: 1rem;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+    }
+
+    @media (min-width: 768px) { main { padding: 2rem; } }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* DESTAQUE CENTRAL ADAPTADO PARA MOBILE */
+    .hero-image-container {
+      position: relative;
+      width: 100%;
+      height: 240px; /* Tamanho ideal para celular */
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--wood-gold);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+      margin-bottom: 1.5rem;
+      background: #000;
+    }
+
+    @media (min-width: 768px) {
+      .hero-image-container {
+        height: 420px; /* Tamanho para computador */
+        border-width: 3px;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+      }
+    }
+
+    .hero-image-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .hero-caption {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 1rem;
+      background: linear-gradient(to top, rgba(15, 12, 8, 0.95), transparent);
+    }
+
+    .hero-caption h2 { font-size: 1.1rem; color: #fff; font-weight: 800; }
+    .hero-caption p { font-size: 0.75rem; color: var(--wood-gold); }
+
+    @media (min-width: 768px) {
+      .hero-caption h2 { font-size: 1.5rem; }
+      .hero-caption p { font-size: 0.9rem; }
+    }
+
+    /* CARDS DE KPIS EM GRADE RESPONSIVA */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .kpi-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-wood);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .card-title { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; }
+    .card-value { font-size: 1.2rem; font-weight: 800; margin-top: 4px; color: #fff; }
+
+    @media (min-width: 768px) {
+      .card-title { font-size: 0.75rem; }
+      .card-value { font-size: 1.6rem; }
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 900px) { .charts-grid { grid-template-columns: 1fr 1fr; } }
+
+    .panel-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border-wood);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    @media (min-width: 768px) { .panel-box { padding: 1.5rem; margin-bottom: 1.5rem; } }
+
+    .panel-title { font-size: 0.95rem; color: var(--wood-gold); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 8px; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+
+    @media (min-width: 600px) {
+      .form-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+    }
+
+    input, select, button {
+      background: #100b07;
+      border: 1px solid var(--border-wood);
+      color: var(--text-main);
+      padding: 10px;
+      border-radius: 6px;
+      outline: none;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+
+    button.btn-add {
+      background: var(--wood-gold);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+
+    /* ROLAGEM HORIZONTAL NAS TABELAS NO MOBILE */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; min-width: 550px; }
+    th { color: var(--wood-gold); border-bottom: 2px solid var(--border-wood); padding: 8px; text-align: left; font-size: 0.75rem; text-transform: uppercase; }
+    td { border-bottom: 1px solid var(--border-wood); padding: 8px; font-size: 0.8rem; }
+
+    .badge { padding: 3px 6px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; }
+    .badge-pago { background: rgba(42, 157, 143, 0.2); color: var(--green-profit); border: 1px solid var(--green-profit); }
+    .badge-pendente { background: rgba(231, 29, 54, 0.2); color: var(--red-alert); border: 1px solid var(--red-alert); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-house-chimney-crack"></i>
+      <h1>GESTAO DE OBRA PAU A PIQUE // DASHBOARD REAL</h1>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('resumo')"><i class="fa-solid fa-chart-pie"></i> Resumo Financeiro</button>
+      <button class="nav-btn" onclick="switchTab('equipe')"><i class="fa-solid fa-users"></i> Mão de Obra & Bancos</button>
+      <button class="nav-btn" onclick="switchTab('materiais')"><i class="fa-solid fa-cubes"></i> Lista de Materiais</button>
+      <button class="nav-btn" onclick="switchTab('custos')"><i class="fa-solid fa-mug-hot"></i> Café & Gasolina</button>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ABA 1: RESUMO COM A IMAGEM REAL EM DESTAQUE CENTRAL -->
+    <section id="tab-resumo" class="tab-content active">
+      
+      <div class="hero-image-container">
+        <!-- COLOQUE A IMAGEM NA MESMA PASTA DO PROJETO E NOMEIE COMO 'obra_pau_a_pique.jpg' -->
+        <img src="imagem/Gemini_Generated_Image_lcqhp5lcqhp5lcqh.jfif" alt="Construção de Casa em Pau a Pique" onerror="this.src='https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?q=80&w=1920'">
+        <div class="hero-caption">
+          <div>
+            <h2>Obra Sustentável - Taipa de Mão & Bambu</h2>
+            <p>Acompanhamento de Custos, Mão de Obra, Insumos e Lucro Real</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="card">
+          <div class="card-title">Valor Bruto Contratado</div>
+          <div class="card-value">R$ 500.000,00</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Gastos Totais da Obra</div>
+          <div class="card-value" id="kpi-custos" style="color: var(--wood-gold);">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Lucro Líquido Real</div>
+          <div class="card-value" id="kpi-lucro" style="color: var(--green-profit);">R$ 0,00</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Margem de Lucro</div>
+          <div class="card-value" id="kpi-margem">0%</div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="panel-box">
+          <div class="panel-title"><i class="fa-solid fa-chart-pie"></i> Distribuição dos Gastos</div>
+          <canvas id="chartPizza" height="180"></canvas>
+        </div>
+        <div class="panel-box">
+          <div class="panel-title"><i class="fa-solid fa-chart-column"></i> Balanço: Contrato vs Gastos vs Lucro</div>
+          <canvas id="chartBarras" height="180"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ABA 2: MÃO DE OBRA & BANCOS DA EQUIPE -->
+    <section id="tab-equipe" class="tab-content">
+      <div class="panel-box">
+        <div class="panel-title"><i class="fa-solid fa-user-plus"></i> Cadastro de Profissionais, Dias e Dados Bancários</div>
+        <div class="form-grid">
+          <input type="text" id="eq-nome" placeholder="Nome do Funcionário">
+          <select id="eq-cargo">
+            <option value="Mestre Taipeiro">Mestre Taipeiro</option>
+            <option value="Pedreiro">Pedreiro</option>
+            <option value="Ajudante">Ajudante</option>
+            <option value="Carpinteiro">Carpinteiro</option>
+          </select>
+          <input type="number" id="eq-salario" placeholder="Diária/Salário (R$)">
+          <input type="number" id="eq-dias" placeholder="Dias Trabalhados">
+          <input type="number" id="eq-hextras" placeholder="Horas Extras (Hs)">
+          <input type="text" id="eq-banco" placeholder="Banco / Chave Pix">
+          <input type="date" id="eq-data">
+          <button class="btn-add" onclick="addFuncionario()">+ Cadastrar</button>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <div class="panel-title"><i class="fa-solid fa-file-invoice-dollar"></i> Folha de Pagamento da Obra</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Cargo</th>
+              <th>Banco / Pix</th>
+              <th>Diária</th>
+              <th>Dias</th>
+              <th>H. Extras</th>
+              <th>Total a Pagar</th>
+              <th>Dia Pgto</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tb-equipe"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ABA 3: LISTA DE MATERIAIS -->
+    <section id="tab-materiais" class="tab-content">
+      <div class="panel-box">
+        <div class="panel-title"><i class="fa-solid fa-boxes-packing"></i> Levantamento de Materiais (Bambu, Madeira, Barro, Pregos)</div>
+        <div class="form-grid">
+          <input type="text" id="mat-nome" placeholder="Nome do Material">
+          <input type="number" id="mat-qtd" placeholder="Quantidade">
+          <input type="text" id="mat-un" placeholder="Unidade (Caminhão, Dúzia, Unid)">
+          <input type="number" id="mat-valor" placeholder="Valor Unitário (R$)">
+          <button class="btn-add" onclick="addMaterial()">+ Adicionar</button>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Material / Insumo</th>
+              <th>Quantidade</th>
+              <th>Unidade</th>
+              <th>Valor Unitário</th>
+              <th>Total (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tb-materiais"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ABA 4: CAFÉ & GASOLINA / CUSTOS DIÁRIOS -->
+    <section id="tab-custos" class="tab-content">
+      <div class="panel-box">
+        <div class="panel-title"><i class="fa-solid fa-gas-pump"></i> Lançamento Diário (Café da Manhã, Gasolina, Fretes)</div>
+        <div class="form-grid">
+          <input type="date" id="cst-data">
+          <select id="cst-cat">
+            <option value="Café / Alimentação">Café / Alimentação</option>
+            <option value="Gasolina / Combustível">Gasolina / Combustível</option>
+            <option value="Frete / Transporte">Frete / Transporte</option>
+            <option value="Ferramentas Diárias">Ferramentas Diárias</option>
+          </select>
+          <input type="text" id="cst-desc" placeholder="Descrição do Gasto">
+          <input type="number" id="cst-valor" placeholder="Valor (R$)">
+          <button class="btn-add" onclick="addCusto()">+ Lançar Gasto</button>
+        </div>
+      </div>
+
+      <div class="panel-box">
+        <table>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th>Valor (R$)</th>
+            </tr>
+          </thead>
+          <tbody id="tb-custos"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const CONTRATO = 500000.00;
+
+    let equipe = [
+      { nome: "Zé do Barro", cargo: "Mestre Taipeiro", banco: "Itaú / Pix: 123.456.789-00", salario: 4500, dias: 22, hextras: 10, data: "2026-10-05", status: "Pago" },
+      { nome: "Carlos Oliveira", cargo: "Pedreiro", banco: "Bradesco / Pix: 987.654.321-11", salario: 3000, dias: 22, hextras: 12, data: "2026-10-05", status: "Pendente" },
+      { nome: "Marcos Silva", cargo: "Ajudante", banco: "Nubank / Pix: marcos@gmail.com", salario: 1800, dias: 22, hextras: 8, data: "2026-10-05", status: "Pendente" }
+    ];
+
+    let materiais = [
+      { nome: "Caminhão de Barro / Argila", qtd: 6, un: "Caminhão", valor: 1200 },
+      { nome: "Bambu Tratado para Trama", qtd: 150, un: "Varas", valor: 25 },
+      { nome: "Madeira para Vigas e Pilares", qtd: 40, un: "Dúzia", valor: 220 }
+    ];
+
+    let custos = [
+      { data: "2026-10-01", cat: "Café / Alimentação", desc: "Pão, café e queijo para a equipe", valor: 85.00 },
+      { data: "2026-10-01", cat: "Gasolina / Combustível", desc: "Gasolina para buscar materiais na cidade", valor: 150.00 }
+    ];
+
+    let chartPizzaObj = null;
+    let chartBarrasObj = null;
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      event.currentTarget.classList.add('active');
+      if(tab === 'resumo') updateDashboard();
+    }
+
+    function updateDashboard() {
+      let tEq = equipe.reduce((acc, f) => acc + f.salario + (f.hextras * 25), 0);
+      let tMat = materiais.reduce((acc, m) => acc + (m.qtd * m.valor), 0);
+      let tCst = custos.reduce((acc, c) => acc + c.valor, 0);
+      let totalGastos = tEq + tMat + tCst;
+      let lucro = CONTRATO - totalGastos;
+      let margem = (lucro / CONTRATO) * 100;
+
+      document.getElementById('kpi-custos').innerText = 'R$ ' + totalGastos.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+      document.getElementById('kpi-lucro').innerText = 'R$ ' + lucro.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+      document.getElementById('kpi-margem').innerText = margem.toFixed(1) + '%';
+
+      renderCharts(tEq, tMat, tCst, lucro);
+    }
+
+    function renderCharts(eq, mat, cst, lucro) {
+      // Gráfico de Pizza (Categorias)
+      const ctx1 = document.getElementById('chartPizza').getContext('2d');
+      if(chartPizzaObj) chartPizzaObj.destroy();
+      chartPizzaObj = new Chart(ctx1, {
+        type: 'doughnut',
+        data: {
+          labels: ['Mão de Obra', 'Materiais', 'Café & Gasolina'],
+          datasets: [{ data: [eq, mat, cst], backgroundColor: ['#dda15e', '#bc6c25', '#e71d36'] }]
+        },
+        options: { plugins: { legend: { labels: { color: '#faedcd' } } } }
+      });
+
+      // Gráfico de Barras (Contrato x Gastos x Lucro)
+      const ctx2 = document.getElementById('chartBarras').getContext('2d');
+      if(chartBarrasObj) chartBarrasObj.destroy();
+      chartBarrasObj = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: ['Contrato', 'Gastos Totais', 'Lucro Real'],
+          datasets: [{ data: [CONTRATO, eq + mat + cst, lucro], backgroundColor: ['#2a9d8f', '#dda15e', '#10b981'] }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#998b7d' } }, x: { ticks: { color: '#998b7d' } } } }
+      });
+    }
+
+    function renderTables() {
+      document.getElementById('tb-equipe').innerHTML = equipe.map(f => `
+        <tr>
+          <td><strong>${f.nome}</strong></td>
+          <td>${f.cargo}</td>
+          <td><small style="color:var(--wood-gold);">${f.banco}</small></td>
+          <td>R$ ${f.salario.toFixed(2)}</td>
+          <td>${f.dias} dias</td>
+          <td>${f.hextras}h</td>
+          <td style="color:var(--green-profit); font-weight:bold;">R$ ${(f.salario + (f.hextras * 25)).toFixed(2)}</td>
+          <td>${f.data}</td>
+          <td><span class="badge ${f.status === 'Pago' ? 'badge-pago' : 'badge-pendente'}">${f.status}</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('tb-materiais').innerHTML = materiais.map(m => `
+        <tr>
+          <td><strong>${m.nome}</strong></td>
+          <td>${m.qtd}</td>
+          <td>${m.un}</td>
+          <td>R$ ${m.valor.toFixed(2)}</td>
+          <td style="color:var(--wood-gold); font-weight:bold;">R$ ${(m.qtd * m.valor).toFixed(2)}</td>
+        </tr>
+      `).join('');
+
+      document.getElementById('tb-custos').innerHTML = custos.map(c => `
+        <tr>
+          <td>${c.data}</td>
+          <td><span class="badge badge-pago">${c.cat}</span></td>
+          <td>${c.desc}</td>
+          <td style="color:var(--wood-gold); font-weight:bold;">R$ ${c.valor.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function addFuncionario() {
+      let nome = document.getElementById('eq-nome').value;
+      let cargo = document.getElementById('eq-cargo').value;
+      let salario = parseFloat(document.getElementById('eq-salario').value);
+      let dias = parseInt(document.getElementById('eq-dias').value) || 22;
+      let hextras = parseFloat(document.getElementById('eq-hextras').value) || 0;
+      let banco = document.getElementById('eq-banco').value || 'Não informado';
+      let data = document.getElementById('eq-data').value;
+
+      if(nome && salario) {
+        equipe.push({ nome, cargo, banco, salario, dias, hextras, data, status: "Pendente" });
+        renderTables();
+        updateDashboard();
+      }
+    }
+
+    function addMaterial() {
+      let nome = document.getElementById('mat-nome').value;
+      let qtd = parseFloat(document.getElementById('mat-qtd').value);
+      let un = document.getElementById('mat-un').value || 'Unid';
+      let valor = parseFloat(document.getElementById('mat-valor').value);
+
+      if(nome && valor) {
+        materiais.push({ nome, qtd, un, valor });
+        renderTables();
+        updateDashboard();
+      }
+    }
+
+    function addCusto() {
+      let data = document.getElementById('cst-data').value;
+      let cat = document.getElementById('cst-cat').value;
+      let desc = document.getElementById('cst-desc').value;
+      let valor = parseFloat(document.getElementById('cst-valor').value);
+
+      if(valor) {
+        custos.push({ data, cat, desc, valor });
+        renderTables();
+        updateDashboard();
+      }
+    }
+
+    window.onload = function() {
+      renderTables();
+      updateDashboard();
+    };
+  </script>
+</body>
+</html>
